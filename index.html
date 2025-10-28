@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>태풍 6시간 뒤 풍속 예측</title>
 
-  <!-- 예쁜 글꼴 -->
+  <!-- 글꼴 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- 모델 JS (Colab에서 만든 파일) -->
+  <!-- 모델 규칙 JS -->
   <script src="./models/decision_tree_rules.js"></script>
 
   <style>
@@ -75,12 +75,20 @@
     #predict{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0b1226;box-shadow:0 12px 30px rgba(110,231,255,.25);}
     #predict:hover{transform:translateY(-1px);}
     #clear{background:rgba(148,163,184,.18);color:var(--text);border:1px solid rgba(148,163,184,.25);}
+    #example{background:rgba(167,139,250,.2);color:var(--text);border:1px solid rgba(167,139,250,.3);}
     .ranges{margin:14px 4px 0;color:var(--muted);font-size:.92rem;}
     .result{margin-top:18px;font-size:1.05rem;font-weight:700;
       padding:14px 16px;border-radius:12px;background:rgba(2,6,23,.45);
       border:1px solid rgba(148,163,184,.25);}
     .result.ok{color:var(--ok);border-color:rgba(16,185,129,.35);}
     .result.err{color:var(--danger);border-color:rgba(239,68,68,.35);}
+    .grade{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;font-weight:700;font-size:.92rem;
+      border:1px solid rgba(148,163,184,.25);background:rgba(2,6,23,.45);
+    }
+    .dot{width:10px;height:10px;border-radius:999px;background:#999;}
     footer{margin-top:16px;color:var(--muted);font-size:.88rem;text-align:center;}
   </style>
 </head>
@@ -121,10 +129,12 @@
       <div class="actions">
         <button id="predict">예측하기</button>
         <button id="clear">지우기</button>
+        <button id="example">예시 자동입력</button>
       </div>
 
       <div class="ranges">권장 범위 · 풍속 0–120 kt · 기압 880–1040 hPa · 위도 0–60N · 경도 100–160E</div>
       <div class="result" id="result">입력 후 “예측하기”를 눌러주세요.</div>
+      <div id="grade" class="grade"></div>
     </div>
 
     <footer>모델: DecisionTreeRegressor · 단위 변환: kt ↔ m/s · 브라우저에서 오프라인 예측</footer>
@@ -137,21 +147,28 @@
     };
     const inRange=(v,{min,max})=> v>=min && v<=max;
 
+    // 풍속(m/s)에 따른 등급
+    function gradeWind(y_mps){
+      if (y_mps < 17.2) return {label:"약함(열대저기압)",color:"#60a5fa",desc:"강수·돌풍 가능성 있으나 피해 적음"};
+      if (y_mps < 24.5) return {label:"보통(열대폭풍)",color:"#34d399",desc:"해상·야외활동 주의"};
+      if (y_mps < 32.7) return {label:"강함(강한 열대폭풍)",color:"#f59e0b",desc:"강풍·호우 대비 필요"};
+      return {label:"매우 강함(태풍)",color:"#ef4444",desc:"광범위한 피해 가능성, 철저 대비 필요"};
+    }
+
     function getInputs(){
-      const windVal = parseFloat($("wind").value);
-      const windUnit = $("windUnit").value;
-      const pressure = parseFloat($("pressure").value);
-      const lat = parseFloat($("lat").value);
-      const lon = parseFloat($("lon").value);
-      return { windVal, windUnit, pressure, lat, lon };
+      return {
+        windVal: parseFloat($("wind").value),
+        windUnit: $("windUnit").value,
+        pressure: parseFloat($("pressure").value),
+        lat: parseFloat($("lat").value),
+        lon: parseFloat($("lon").value),
+      };
     }
 
     function validate({windVal, windUnit, pressure, lat, lon}){
       if ([windVal, pressure, lat, lon].some(v => Number.isNaN(v)))
         return "모든 입력을 숫자로 채워주세요.";
-
       const windKt = (windUnit === "mps") ? (windVal / 0.514) : windVal;
-
       if (!inRange(windKt, RANGES.wind)) return `풍속(kt)은 ${RANGES.wind.min}~${RANGES.wind.max} 범위로 입력해주세요.`;
       if (!inRange(pressure, RANGES.pressure)) return `기압(hPa)은 ${RANGES.pressure.min}~${RANGES.pressure.max} 범위로 입력해주세요.`;
       if (!inRange(lat, RANGES.lat)) return `위도(°N)는 ${RANGES.lat.min}~${RANGES.lat.max} 범위로 입력해주세요.`;
@@ -161,10 +178,10 @@
 
     function predict(){
       const res = $("result");
+      const box = $("grade");
       const inputs = getInputs();
       const err = validate(inputs);
-      if (err){ res.textContent = err; res.className = "result err"; return; }
-
+      if (err){ res.textContent = err; res.className = "result err"; box.innerHTML=""; return; }
       const windKt = (inputs.windUnit === "mps") ? (inputs.windVal / 0.514) : inputs.windVal;
 
       try{
@@ -172,23 +189,36 @@
         const y_kt  = y_mps / 0.514;
         res.innerHTML = `6시간 뒤 예측 풍속: <b>${y_mps.toFixed(2)} m/s</b> (≈ ${y_kt.toFixed(1)} kt)`;
         res.className = "result ok";
+
+        const g = gradeWind(y_mps);
+        box.innerHTML = `
+          <span class="chip"><span class="dot" style="background:${g.color}"></span>${g.label}</span>
+          <span class="chip" style="opacity:.9">${g.desc}</span>`;
       }catch(e){
-        console.error(e);
-        res.textContent = "예측 중 오류가 발생했습니다.";
-        res.className = "result err";
+        res.textContent = "예측 중 오류가 발생했습니다."; res.className="result err"; box.innerHTML="";
       }
     }
 
     function clearAll(){
       ["wind","pressure","lat","lon"].forEach(id=>$(id).value="");
+      $("windUnit").value="kt";
+      $("result").textContent="입력 후 “예측하기”를 눌러주세요.";
+      $("result").className="result";
+      $("grade").innerHTML="";
+    }
+
+    // 자동 예시 입력
+    function fillExample(){
+      $("wind").value = 50;
       $("windUnit").value = "kt";
-      const res = $("result");
-      res.textContent = "입력 후 “예측하기”를 눌러주세요.";
-      res.className = "result";
+      $("pressure").value = 970;
+      $("lat").value = 25.2;
+      $("lon").value = 126.3;
     }
 
     $("predict").addEventListener("click", predict);
     $("clear").addEventListener("click", clearAll);
+    $("example").addEventListener("click", fillExample);
     ["wind","pressure","lat","lon"].forEach(id=>{
       $(id).addEventListener("keydown", e=>{ if(e.key==="Enter") predict(); });
     });
