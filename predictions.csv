@@ -1,0 +1,3 @@
+lat,lon,pressure(hPa),current_wind(m/s),target_next_wind(m/s),pred_persistence(m/s),pred_linear(m/s),pred_knn(m/s),pred_tree(m/s)
+27.3,127.8,975,23.13,20.56,23.13,18.25,25.7,23.13
+27.6,128.2,985,20.56,17.99,20.56,9.96,23.13,23.13

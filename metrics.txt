@@ -1,0 +1,4 @@
+MAE_base(m/s): 2.570
+MAE_linear(m/s): 5.172
+MAE_knn(m/s): 5.140
+MAE_tree(m/s): 3.855
