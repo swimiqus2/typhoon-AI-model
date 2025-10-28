@@ -5,129 +5,83 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>태풍 6시간 뒤 풍속 예측</title>
 
-  <!-- (선택) 보기 좋은 글꼴 -->
+  <!-- 예쁜 글꼴 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- 모델 규칙 JS (우리가 Colab에서 만든 파일) -->
+  <!-- 모델 JS (Colab에서 만든 파일) -->
   <script src="./models/decision_tree_rules.js"></script>
 
   <style>
     :root{
-      --bg1:#0f172a;   /* slate-900 */
-      --bg2:#1e293b;   /* slate-800 */
-      --card:#0b1226cc;/* glass */
-      --accent:#6ee7ff;/* cyan-300 */
-      --accent2:#a78bfa;/* violet-400 */
-      --ok:#10b981;    /* emerald-500 */
-      --danger:#ef4444;/* red-500 */
-      --text:#e5e7eb;  /* zinc-200 */
-      --muted:#94a3b8; /* slate-400 */
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius: 18px;
+      --bg1:#0f172a;
+      --bg2:#1e293b;
+      --card:#0b1226cc;
+      --accent:#6ee7ff;
+      --accent2:#a78bfa;
+      --ok:#10b981;
+      --danger:#ef4444;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{box-sizing:border-box;}
     body{
-      margin:0;
-      font-family: "Pretendard", system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
-      color:var(--text);
-      /* 그라디언트+노이즈 배경 */
+      margin:0; padding:32px;
+      font-family:"Pretendard",system-ui;
       background:
-        radial-gradient(1200px 800px at 20% 10%, rgba(103,232,249,.25), transparent 60%),
-        radial-gradient(1000px 800px at 80% 120%, rgba(167,139,250,.25), transparent 60%),
+        radial-gradient(1000px 700px at 20% 10%, rgba(103,232,249,.25), transparent 60%),
+        radial-gradient(800px 600px at 80% 120%, rgba(167,139,250,.25), transparent 60%),
         linear-gradient(135deg, var(--bg1), var(--bg2));
-      min-height:100%;
-      display:flex; align-items:center; justify-content:center;
-      padding:32px;
-      overflow-x:hidden;
+      color:var(--text);
+      display:flex; justify-content:center; align-items:center;
+      min-height:100vh;
     }
-    .wrap{
-      width: min(960px, 100%);
-      position:relative;
-      animation: fadeIn .7s ease both;
-    }
-    @keyframes fadeIn{from{opacity:0; transform: translateY(10px)} to{opacity:1; transform:none}}
-
-    .title{
-      display:flex; align-items:center; gap:14px; margin:0 0 16px 4px;
-    }
+    .wrap{width:min(960px,100%);animation:fadeIn .7s ease both;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    .title{display:flex;align-items:center;gap:14px;margin-bottom:10px;}
     .logo{
-      width:42px;height:42px; border-radius:12px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      box-shadow: var(--shadow);
-      display:grid; place-items:center; font-weight:800; color:#0b1226;
+      width:42px;height:42px;border-radius:12px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      box-shadow:var(--shadow);display:grid;place-items:center;
+      font-weight:800;color:#0b1226;
     }
-    h1{font-size: clamp(1.3rem, 2.4vw, 2rem); margin:0; letter-spacing:.2px}
-    .subtitle{margin:6px 0 18px 4px; color:var(--muted); font-size:.96rem}
-
+    h1{margin:0;font-size:clamp(1.3rem,2.4vw,2rem);}
+    .subtitle{color:var(--muted);margin:6px 0 18px;font-size:.96rem;}
     .card{
-      background: var(--card);
-      backdrop-filter: blur(12px);
+      background:var(--card);backdrop-filter:blur(12px);
       border:1px solid rgba(148,163,184,.25);
-      border-radius: var(--radius);
-      padding: 22px;
-      box-shadow: var(--shadow);
+      border-radius:var(--radius);padding:22px;
+      box-shadow:var(--shadow);
     }
-
-    .grid{
-      display:grid; gap:14px;
-      grid-template-columns: 1fr;
+    .grid{display:grid;gap:14px;}
+    @media(min-width:720px){.grid{grid-template-columns:repeat(2,1fr);}}
+    .field{display:flex;flex-direction:column;gap:8px;background:rgba(2,6,23,.35);
+      border:1px solid rgba(148,163,184,.25);padding:12px;border-radius:12px;}
+    label{font-weight:600;font-size:.95rem;}
+    input,select{
+      padding:12px;border:1px solid rgba(148,163,184,.2);
+      border-radius:10px;background:rgba(15,23,42,.6);
+      color:var(--text);font-size:16px;outline:none;
     }
-    @media (min-width:720px){
-      .grid{ grid-template-columns: repeat(2, 1fr); }
-    }
-
-    label{font-weight:600; font-size:.95rem; margin-left:2px}
-    .field{
-      display:flex; flex-direction:column; gap:8px;
-      background: rgba(2,6,23,.35);
-      border:1px solid rgba(148,163,184,.25);
-      padding:12px; border-radius:12px;
-    }
-    input{
-      width:100%; padding:12px 14px;
-      background: rgba(15,23,42,.6);
-      border:1px solid rgba(148,163,184,.2);
-      border-radius:10px; color:var(--text);
-      outline:none; font-size:16px;
-    }
-    input:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px rgba(110,231,255,.15); }
-
-    .actions{
-      display:flex; gap:12px; flex-wrap:wrap; margin-top:14px;
-    }
+    input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(110,231,255,.15);}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;}
     button{
-      border:0; cursor:pointer; border-radius:12px; padding:12px 16px;
-      font-weight:700; letter-spacing:.2px;
-      transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
+      border:0;border-radius:12px;padding:12px 16px;cursor:pointer;
+      font-weight:700;transition:.15s ease all;
     }
-    #predict{
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color:#0b1226;
-      box-shadow: 0 12px 30px rgba(110,231,255,.25);
-    }
-    #predict:hover{ transform: translateY(-1px); }
-    #predict:active{ transform: translateY(0); }
-    #clear{
-      background: rgba(148,163,184,.18); color:var(--text);
-      border:1px solid rgba(148,163,184,.25);
-    }
-
-    .ranges{
-      margin:14px 4px 0; color:var(--muted); font-size:.92rem
-    }
-
-    .result{
-      margin-top:18px; font-size:1.05rem; font-weight:700;
-      padding:14px 16px; border-radius:12px;
-      background: rgba(2,6,23,.45); border:1px solid rgba(148,163,184,.25);
-    }
-    .result.ok{ color: var(--ok); border-color: rgba(16,185,129,.35) }
-    .result.err{ color: var(--danger); border-color: rgba(239,68,68,.35) }
-
-    footer{ margin-top:16px; color:var(--muted); font-size:.88rem; text-align:center}
+    #predict{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0b1226;box-shadow:0 12px 30px rgba(110,231,255,.25);}
+    #predict:hover{transform:translateY(-1px);}
+    #clear{background:rgba(148,163,184,.18);color:var(--text);border:1px solid rgba(148,163,184,.25);}
+    .ranges{margin:14px 4px 0;color:var(--muted);font-size:.92rem;}
+    .result{margin-top:18px;font-size:1.05rem;font-weight:700;
+      padding:14px 16px;border-radius:12px;background:rgba(2,6,23,.45);
+      border:1px solid rgba(148,163,184,.25);}
+    .result.ok{color:var(--ok);border-color:rgba(16,185,129,.35);}
+    .result.err{color:var(--danger);border-color:rgba(239,68,68,.35);}
+    footer{margin-top:16px;color:var(--muted);font-size:.88rem;text-align:center;}
   </style>
 </head>
 <body>
@@ -136,13 +90,19 @@
       <div class="logo">🌀</div>
       <h1>태풍 6시간 뒤 풍속 예측</h1>
     </div>
-    <div class="subtitle">현재 상태 4가지를 입력하면, 브라우저에서 즉시 예측합니다. (결정트리 모델·로컬 실행)</div>
+    <div class="subtitle">현재 상태 4가지를 입력하면, 브라우저에서 즉시 예측합니다. (결정트리 모델)</div>
 
     <div class="card">
       <div class="grid">
         <div class="field">
-          <label for="wind">현재 최대풍속 (kt)</label>
-          <input id="wind" type="number" step="0.1" placeholder="예: 50" inputmode="decimal">
+          <label for="wind">현재 최대풍속</label>
+          <div style="display:flex;gap:8px;">
+            <input id="wind" type="number" step="0.1" placeholder="예: 50" inputmode="decimal" style="flex:1;">
+            <select id="windUnit" aria-label="wind unit">
+              <option value="kt" selected>kt</option>
+              <option value="mps">m/s</option>
+            </select>
+          </div>
         </div>
         <div class="field">
           <label for="pressure">중심기압 (hPa)</label>
@@ -167,13 +127,10 @@
       <div class="result" id="result">입력 후 “예측하기”를 눌러주세요.</div>
     </div>
 
-    <footer>모델: DecisionTreeRegressor · 단위 변환: kt → m/s · 브라우저에서 오프라인 예측</footer>
+    <footer>모델: DecisionTreeRegressor · 단위 변환: kt ↔ m/s · 브라우저에서 오프라인 예측</footer>
   </div>
 
   <script>
-    // ==========================
-    // 입력 유효성 검사 + 예측 로직
-    // ==========================
     const $ = (id) => document.getElementById(id);
     const RANGES = {
       wind:{min:0,max:120}, pressure:{min:880,max:1040}, lat:{min:0,max:60}, lon:{min:100,max:160}
@@ -181,19 +138,24 @@
     const inRange=(v,{min,max})=> v>=min && v<=max;
 
     function getInputs(){
-      return {
-        wind: parseFloat($("wind").value),
-        pressure: parseFloat($("pressure").value),
-        lat: parseFloat($("lat").value),
-        lon: parseFloat($("lon").value),
-      };
+      const windVal = parseFloat($("wind").value);
+      const windUnit = $("windUnit").value;
+      const pressure = parseFloat($("pressure").value);
+      const lat = parseFloat($("lat").value);
+      const lon = parseFloat($("lon").value);
+      return { windVal, windUnit, pressure, lat, lon };
     }
-    function validate({wind,pressure,lat,lon}){
-      if ([wind,pressure,lat,lon].some(v=>Number.isNaN(v))) return "모든 입력을 숫자로 채워주세요.";
-      if (!inRange(wind,RANGES.wind)) return `풍속(kt)은 ${RANGES.wind.min}~${RANGES.wind.max} 범위로 입력해주세요.`;
-      if (!inRange(pressure,RANGES.pressure)) return `기압(hPa)은 ${RANGES.pressure.min}~${RANGES.pressure.max} 범위로 입력해주세요.`;
-      if (!inRange(lat,RANGES.lat)) return `위도(°N)는 ${RANGES.lat.min}~${RANGES.lat.max} 범위로 입력해주세요.`;
-      if (!inRange(lon,RANGES.lon)) return `경도(°E)는 ${RANGES.lon.min}~${RANGES.lon.max} 범위로 입력해주세요.`;
+
+    function validate({windVal, windUnit, pressure, lat, lon}){
+      if ([windVal, pressure, lat, lon].some(v => Number.isNaN(v)))
+        return "모든 입력을 숫자로 채워주세요.";
+
+      const windKt = (windUnit === "mps") ? (windVal / 0.514) : windVal;
+
+      if (!inRange(windKt, RANGES.wind)) return `풍속(kt)은 ${RANGES.wind.min}~${RANGES.wind.max} 범위로 입력해주세요.`;
+      if (!inRange(pressure, RANGES.pressure)) return `기압(hPa)은 ${RANGES.pressure.min}~${RANGES.pressure.max} 범위로 입력해주세요.`;
+      if (!inRange(lat, RANGES.lat)) return `위도(°N)는 ${RANGES.lat.min}~${RANGES.lat.max} 범위로 입력해주세요.`;
+      if (!inRange(lon, RANGES.lon)) return `경도(°E)는 ${RANGES.lon.min}~${RANGES.lon.max} 범위로 입력해주세요.`;
       return null;
     }
 
@@ -203,26 +165,28 @@
       const err = validate(inputs);
       if (err){ res.textContent = err; res.className = "result err"; return; }
 
+      const windKt = (inputs.windUnit === "mps") ? (inputs.windVal / 0.514) : inputs.windVal;
+
       try{
-        const y = predictNextWindMps(inputs.wind, inputs.pressure, inputs.lat, inputs.lon);
-        res.textContent = `6시간 뒤 예측 풍속: ${y.toFixed(2)} m/s`;
+        const y_mps = predictNextWindMps(windKt, inputs.pressure, inputs.lat, inputs.lon);
+        const y_kt  = y_mps / 0.514;
+        res.innerHTML = `6시간 뒤 예측 풍속: <b>${y_mps.toFixed(2)} m/s</b> (≈ ${y_kt.toFixed(1)} kt)`;
         res.className = "result ok";
       }catch(e){
         console.error(e);
-        res.textContent = "예측 중 오류가 발생했습니다. 콘솔(F12)을 확인해주세요.";
+        res.textContent = "예측 중 오류가 발생했습니다.";
         res.className = "result err";
       }
     }
 
     function clearAll(){
       ["wind","pressure","lat","lon"].forEach(id=>$(id).value="");
+      $("windUnit").value = "kt";
       const res = $("result");
       res.textContent = "입력 후 “예측하기”를 눌러주세요.";
       res.className = "result";
-      $("wind").focus();
     }
 
-    // 이벤트
     $("predict").addEventListener("click", predict);
     $("clear").addEventListener("click", clearAll);
     ["wind","pressure","lat","lon"].forEach(id=>{
