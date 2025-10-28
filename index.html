@@ -44,28 +44,63 @@
     <div>입력 유효범위 예시: 풍속 0–120 kt, 기압 880–1040 hPa, 위도 0–60N, 경도 100–160E (임의 가이드)</div>
   </footer>
 
-  <script>
-    // 간단한 유효성 검사 + 예측 호출
-    const $ = (id) => document.getElementById(id);
-    $("predict").addEventListener("click", () => {
-      const wind = parseFloat($("wind").value);
-      const pressure = parseFloat($("pressure").value);
-      const lat = parseFloat($("lat").value);
-      const lon = parseFloat($("lon").value);
+<script>
+  // 간단 헬퍼
+  const $ = (id) => document.getElementById(id);
 
-      if ([wind, pressure, lat, lon].some(v => Number.isNaN(v))) {
-        $("result").textContent = "모든 입력을 숫자로 채워주세요.";
-        return;
-      }
-      try {
-        // decision_tree_rules.js 안의 함수 (자동 생성됨)
-        const y = predictNextWindMps(wind, pressure, lat, lon);
-        $("result").textContent = `6시간 뒤 예측 풍속: ${y.toFixed(2)} m/s`;
-      } catch (e) {
-        console.error(e);
-        $("result").textContent = "예측 중 오류가 발생했습니다. 콘솔을 확인하세요.";
-      }
+  // 권장 범위(임의 가이드)
+  const RANGES = {
+    wind:   {min: 0,   max: 120},   // kt
+    pressure:{min: 880, max: 1040}, // hPa
+    lat:    {min: 0,   max: 60},    // deg N
+    lon:    {min: 100, max: 160}    // deg E
+  };
+
+  function inRange(v, {min, max}) { return v >= min && v <= max; }
+
+  function getInputs() {
+    const wind = parseFloat($("wind").value);
+    const pressure = parseFloat($("pressure").value);
+    const lat = parseFloat($("lat").value);
+    const lon = parseFloat($("lon").value);
+    return { wind, pressure, lat, lon };
+  }
+
+  function validate({wind, pressure, lat, lon}) {
+    const missing = [wind, pressure, lat, lon].some(v => Number.isNaN(v));
+    if (missing) return "모든 입력을 숫자로 채워주세요.";
+    if (!inRange(wind, RANGES.wind))       return `풍속(kt)은 ${RANGES.wind.min}~${RANGES.wind.max} 범위로 입력해주세요.`;
+    if (!inRange(pressure, RANGES.pressure)) return `기압(hPa)은 ${RANGES.pressure.min}~${RANGES.pressure.max} 범위로 입력해주세요.`;
+    if (!inRange(lat, RANGES.lat))         return `위도(°N)는 ${RANGES.lat.min}~${RANGES.lat.max} 범위로 입력해주세요.`;
+    if (!inRange(lon, RANGES.lon))         return `경도(°E)는 ${RANGES.lon.min}~${RANGES.lon.max} 범위로 입력해주세요.`;
+    return null;
+  }
+
+  function predict() {
+    const $res = $("result");
+    const inputs = getInputs();
+    const err = validate(inputs);
+    if (err) { $res.textContent = err; $res.style.color = "#d32f2f"; return; }
+
+    try {
+      const y = predictNextWindMps(inputs.wind, inputs.pressure, inputs.lat, inputs.lon);
+      $res.textContent = `6시간 뒤 예측 풍속: ${y.toFixed(2)} m/s`;
+      $res.style.color = "#111";
+    } catch (e) {
+      console.error(e);
+      $res.textContent = "예측 중 오류가 발생했습니다. 콘솔(F12)을 확인해주세요.";
+      $res.style.color = "#d32f2f";
+    }
+  }
+
+  // 클릭 & 엔터키 둘 다 지원
+  $("predict").addEventListener("click", predict);
+  ["wind","pressure","lat","lon"].forEach(id=>{
+    $(id).addEventListener("keydown", (e)=>{
+      if (e.key === "Enter") predict();
     });
-  </script>
+  });
+</script>
 </body>
+
 </html>
