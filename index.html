@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>태풍 6시간 뒤 풍속 예측</title>
+  <style>
+    body { max-width: 720px; margin: 40px auto; font-family: system-ui, sans-serif; line-height: 1.5; }
+    h1 { margin-bottom: 8px; }
+    .card { padding: 16px; border: 1px solid #ddd; border-radius: 12px; }
+    label { display: block; margin: 12px 0 6px; font-weight: 600; }
+    input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    button { margin-top: 16px; padding: 10px 14px; border: 0; border-radius: 8px; cursor: pointer; }
+    button#predict { background: #1f6feb; color: white; }
+    .result { margin-top: 16px; font-size: 1.1rem; font-weight: 700; }
+    .note { color: #666; font-size: 0.9rem; margin-top: 10px; }
+    footer { margin-top: 32px; color: #666; font-size: 0.85rem; }
+  </style>
+  <!-- 모델 규칙 JS (Colab에서 만든 파일을 저장소의 models/ 폴더에 업로드해야 함) -->
+  <script src="./models/decision_tree_rules.js"></script>
+</head>
+<body>
+  <h1>태풍 6시간 뒤 풍속 예측</h1>
+  <div class="card">
+    <label for="wind">현재 최대풍속 (노트, kt)</label>
+    <input id="wind" type="number" step="0.1" placeholder="예: 50" />
+
+    <label for="pressure">중심기압 (hPa)</label>
+    <input id="pressure" type="number" step="0.1" placeholder="예: 970" />
+
+    <label for="lat">위도 (°N)</label>
+    <input id="lat" type="number" step="0.01" placeholder="예: 25.2" />
+
+    <label for="lon">경도 (°E)</label>
+    <input id="lon" type="number" step="0.01" placeholder="예: 126.3" />
+
+    <button id="predict">예측하기</button>
+
+    <div class="result" id="result"></div>
+    <div class="note">※ 출력 단위: m/s (6시간 뒤 최대풍속 예측치)</div>
+  </div>
+
+  <footer>
+    <div>입력 유효범위 예시: 풍속 0–120 kt, 기압 880–1040 hPa, 위도 0–60N, 경도 100–160E (임의 가이드)</div>
+  </footer>
+
+  <script>
+    // 간단한 유효성 검사 + 예측 호출
+    const $ = (id) => document.getElementById(id);
+    $("predict").addEventListener("click", () => {
+      const wind = parseFloat($("wind").value);
+      const pressure = parseFloat($("pressure").value);
+      const lat = parseFloat($("lat").value);
+      const lon = parseFloat($("lon").value);
+
+      if ([wind, pressure, lat, lon].some(v => Number.isNaN(v))) {
+        $("result").textContent = "모든 입력을 숫자로 채워주세요.";
+        return;
+      }
+      try {
+        // decision_tree_rules.js 안의 함수 (자동 생성됨)
+        const y = predictNextWindMps(wind, pressure, lat, lon);
+        $("result").textContent = `6시간 뒤 예측 풍속: ${y.toFixed(2)} m/s`;
+      } catch (e) {
+        console.error(e);
+        $("result").textContent = "예측 중 오류가 발생했습니다. 콘솔을 확인하세요.";
+      }
+    });
+  </script>
+</body>
+</html>
