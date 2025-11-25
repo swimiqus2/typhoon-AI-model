@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>태풍 예측 – 초기 디자인</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: white;
+      color: black;
+      margin: 40px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .box {
+      border: 1px solid #ccc;
+      padding: 16px;
+      border-radius: 6px;
+      width: 360px;
+      background: #fafafa;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    input {
+      width: 100%;
+      margin-top: 4px;
+      padding: 6px;
+      font-size: 14px;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+    }
+    button {
+      margin-top: 14px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #0078ff;
+      color: white;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .note {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>태풍 6시간 뒤 풍속 예측 (초기 디자인)</h1>
+
+  <div class="box">
+    <label>현재 최대풍속 (m/s)</label>
+    <input id="wind" type="number" placeholder="예: 35" />
+
+    <label>중심기압 (hPa)</label>
+    <input id="pressure" type="number" placeholder="예: 960" />
+
+    <label>위도 (°N)</label>
+    <input id="lat" type="number" placeholder="예: 25" />
+
+    <label>경도 (°E)</label>
+    <input id="lon" type="number" placeholder="예: 130" />
+
+    <button onclick="predict()">예측하기</button>
+
+    <div id="result">- 예측값 없음 -</div>
+
+    <div class="note">
+      단순한 규칙 기반 테스트용 초기 버전입니다.  
+      시각적 요소나 검증 기능이 없는 기본 구조입니다.
+    </div>
+  </div>
+
+<script>
+function predict() {
+  const wind = parseFloat(document.getElementById("wind").value);
+  const pressure = parseFloat(document.getElementById("pressure").value);
+  const lat = parseFloat(document.getElementById("lat").value);
+  const lon = parseFloat(document.getElementById("lon").value);
+
+  if (isNaN(wind) || isNaN(pressure) || isNaN(lat) || isNaN(lon)) {
+    document.getElementById("result").innerText = "모든 값을 입력하세요.";
