@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>태풍 풍속 예측 AI V2</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      margin: 0;
+      padding: 0;
+      color: #222;
+    }
+    .container {
+      max-width: 760px;
+      margin: 40px auto;
+      background: white;
+      padding: 28px;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+    }
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+      border-left: 5px solid #1f6feb;
+      padding-left: 10px;
+    }
+    .subtitle, .note {
+      color: #555;
+      line-height: 1.6;
+    }
+    .highlight {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      padding: 12px 16px;
+      border-radius: 10px;
+      line-height: 1.7;
+      font-size: 14px;
+      margin-top: 14px;
+    }
+    .input-group {
+      margin: 16px 0;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    input[type="number"], select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .radio-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 6px;
+    }
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      background: #1f6feb;
+      color: white;
+    }
+    button.secondary {
+      background: #6b7280;
+    }
+    button.sample {
+      background: #0f766e;
+    }
+    .result-box {
+      margin-top: 18px;
+      padding: 20px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #d7dde7;
+    }
+    #resultMain {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    #resultSub {
+      font-size: 16px;
+      line-height: 1.7;
+      color: #333;
+    }
+    #resultTag {
+      margin-top: 12px;
+      font-weight: bold;
+      color: #1f6feb;
+    }
+    #resultNote {
+      margin-top: 14px;
+      line-height: 1.7;
+      font-size: 14px;
+      color: #444;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #d7dde7;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #f1f5ff;
+    }
+    .footer {
+      margin-top: 28px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>태풍 풍속 예측 AI V2</h1>
+    <p class="subtitle">
+      V1은 현재 최대풍속, 중심기압, 위도, 경도를 바탕으로 6시간 뒤 풍속을 예측합니다.
+      V2는 여기에 해상·연안·육지 위치 조건을 추가로 반영하여 V1과 V2의 차이를 비교합니다.
+    </p>
+
+    <div class="highlight">
+      탐구 목적: 해상·연안·육지 조건이 태풍 풍속 예측 성능을 직접 개선하는 변수인지,
+      아니면 모델이 흔들리는 상황을 설명하는 오차 진단 기준인지 확인합니다.
+    </div>
+
+    <h2>① 현재 태풍 상태 입력</h2>
+
+    <div class="input-group">
+      <label for="windInput">현재 최대풍속</label>
+      <input type="number" id="windInput" placeholder="예: 80">
+      <div class="radio-row">
+        <label><input type="radio" name="windUnit" value="kt" checked> kt</label>
+        <label><input type="radio" name="windUnit" value="ms"> m/s</label>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label for="pressureInput">중심기압 hPa</label>
+      <input type="number" id="pressureInput" placeholder="예: 950">
+    </div>
+
+    <div class="input-group">
+      <label for="latInput">위도 °N</label>
+      <input type="number" id="latInput" placeholder="예: 25">
+    </div>
+
+    <div class="input-group">
+      <label for="lonInput">경도 °E</label>
+      <input type="number" id="lonInput" placeholder="예: 130">
+    </div>
+
+    <div class="input-group">
+      <label for="locationType">위치 조건</label>
+      <select id="locationType">
+        <option value="auto">위도·경도 기준 자동 분류</option>
+        <option value="sea">해상</option>
+        <option value="coast">연안</option>
+        <option value="land">육지</option>
+      </select>
+    </div>
+
+    <div class="button-row">
+      <button onclick="onPredict()">예측하기</button>
+      <button class="secondary" onclick="onReset()">지우기</button>
+      <button class="sample" onclick="onSampleSea()">해상 예시</button>
+      <button class="sample" onclick="onSampleCoast()">연안 예시</button>
+      <button class="sample" onclick="onSampleLand()">육지 예시</button>
+    </div>
+
+    <h2>② V1·V2 예측 결과 비교</h2>
+
+    <div class="result-box">
+      <div id="resultMain">-.- m/s</div>
+      <div id="resultSub">아직 예측을 실행하지 않았습니다.</div>
+      <div id="resultTag">태풍 세기: -</div>
+      <div id="resultNote">
+        현재 최대풍속, 중심기압, 위도·경도 정보를 바탕으로 한 V1 예측과
+        해상·연안·육지 위치 조건을 추가한 V2 예측을 비교합니다.
+      </div>
+    </div>
+
+    <h2>③ 보고서 기록용 결과표</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>위치 조건</th>
+          <th>V1 예측값</th>
+          <th>V2 예측값</th>
+          <th>차이</th>
+          <th>역할 해석</th>
+        </tr>
+      </thead>
+      <tbody id="resultTable">
+        <tr>
+          <td colspan="5">예측을 실행하면 결과가 여기에 기록됩니다.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      이 모델은 고등학교 1인1주제 탐구용 프로토타입입니다.
+      실제 기상청 공식 예보가 아니라 V1과 V2의 조건 반영 차이를 비교하기 위한 교육용 모델입니다.
+    </div>
+  </div>
+
+  <script>
+    var records = [];
+
+    function getNumber(id) {
+      var el = document.getElementById(id);
+      var v = parseFloat(el.value);
+      return isNaN(v) ? NaN : v;
+    }
+
+    function getWindUnit() {
+      var radios = document.querySelectorAll('input[name="windUnit"]');
+      for (var i = 0; i < radios.length; i++) {
+        if (radios[i].checked) return radios[i].value;
+      }
+      return "kt";
+    }
+
+    function classifyStrength(ms) {
+      if (ms < 10) return "약한 열대저기압 수준";
+      if (ms < 17) return "약한 태풍";
+      if (ms < 33) return "중간 세기 태풍";
+      return "강한 태풍";
+    }
+
+    function classifyLocationAuto(lat, lon) {
+      if (lat >= 33 && lon >= 124 && lon <= 132) return "land";
+      if (lat >= 27 && lat < 33 && lon >= 122 && lon <= 135) return "coast";
+      return "sea";
+    }
+
+    function getLocationType(lat, lon) {
+      var selected = document.getElementById("locationType").value;
+      if (selected === "auto") return classifyLocationAuto(lat, lon);
+      return selected;
+    }
+
+    function locationLabel(type) {
+      if (type === "sea") return "해상";
+      if (type === "coast") return "연안";
+      if (type === "land") return "육지";
+      return "미분류";
+    }
+
+    function predictWindV1(currentMs, pressure, lat, lon) {
+      var pred = currentMs;
+
+      if (pressure < 950) pred += 3;
+      else if (pressure > 1005) pred -= 2;
+
+      if (lat > 30) pred -= 1.5;
+      else if (lat < 15) pred += 0.5;
+
+      if (lon > 140) pred -= 0.5;
+
+      if (pred < 0) pred = 0;
+      return pred;
+    }
+
+    function predictWindV2(currentMs, pressure, lat, lon, locationType) {
+      var pred = predictWindV1(currentMs, pressure, lat, lon);
+
+      if (locationType === "sea") {
+        if (pressure < 970) pred += 1.2;
+        else pred += 0.5;
+      }
+
+      if (locationType === "coast") {
+        pred -= 0.3;
+        if (currentMs >= 33) pred -= 0.7;
+      }
+
+      if (locationType === "land") {
+        pred -= 2.0;
+        if (currentMs >= 25) pred -= 1.0;
+      }
+
+      if (pred < 0) pred = 0;
+      return pred;
+    }
+
+    function format(x) {
+      return x.toFixed(1);
+    }
+
+    function roleText(diff, locationType) {
+      var label = locationLabel(locationType);
+
+      if (Math.abs(diff) < 0.5) {
+        return label + " 조건은 예측값을 크게 바꾸기보다 오차 진단 기준에 가까움";
+      }
+
+      if (diff > 0) {
+        return label + " 조건은 세력 유지 가능성을 반영하는 예측 보정 변수로 작용";
+      }
+
+      return label + " 조건은 세력 약화 가능성을 설명하는 오차 진단 기준으로 작용";
+    }
+
+    function onPredict() {
+      var windInput = getNumber("windInput");
+      var pressure = getNumber("pressureInput");
+      var lat = getNumber("latInput");
+      var lon = getNumber("lonInput");
+      var unit = getWindUnit();
+
+      if (isNaN(windInput) || isNaN(pressure) || isNaN(lat) || isNaN(lon)) {
+        document.getElementById("resultMain").textContent = "-.- m/s";
+        document.getElementById("resultSub").textContent = "모든 입력 칸에 숫자를 입력해 주세요.";
+        document.getElementById("resultTag").textContent = "태풍 세기: -";
+        document.getElementById("resultNote").innerHTML = "입력값을 다시 확인해 주세요.";
+        return;
+      }
+
+      var windMs = unit === "kt" ? windInput * 0.514 : windInput;
+      var locationType = getLocationType(lat, lon);
+
+      var v1 = predictWindV1(windMs, pressure, lat, lon);
+      var v2 = predictWindV2(windMs, pressure, lat, lon, locationType);
+      var diff = v2 - v1;
+      var strength = classifyStrength(v2);
+      var role = roleText(diff, locationType);
+
+      document.getElementById("resultMain").textContent = format(v2) + " m/s";
+      document.getElementById("resultSub").textContent =
+        "V1 기존 예측: " + format(v1) + " m/s · " +
+        "V2 위치 조건 반영 예측: " + format(v2) + " m/s · " +
+        "차이: " + (diff >= 0 ? "+" : "") + format(diff) + " m/s";
+
+      document.getElementById("resultTag").textContent =
+        "태풍 세기: " + strength + " / 위치 조건: " + locationLabel(locationType);
+
+      document.getElementById("resultNote").innerHTML =
+        "현재 최대풍속, 중심기압, 위도·경도에 해상·연안·육지 조건을 추가 반영했습니다.<br>" +
+        role;
+
+      records.push({
+        location: locationLabel(locationType),
+        v1: format(v1),
+        v2: format(v2),
+        diff: (diff >= 0 ? "+" : "") + format(diff),
+        role: role
+      });
+
+      updateTable();
+    }
+
+    function updateTable() {
+      var tbody = document.getElementById("resultTable");
+      tbody.innerHTML = "";
+
+      for (var i = 0; i < records.length; i++) {
+        var r = records[i];
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td>" + r.location + "</td>" +
+          "<td>" + r.v1 + " m/s</td>" +
+          "<td>" + r.v2 + " m/s</td>" +
+          "<td>" + r.diff + " m/s</td>" +
+          "<td>" + r.role + "</td>";
+        tbody.appendChild(tr);
+      }
+    }
+
+    function onReset() {
+      document.getElementById("windInput").value = "";
+      document.getElementById("pressureInput").value = "";
+      document.getElementById("latInput").value = "";
+      document.getElementById("lonInput").value = "";
+      document.getElementById("locationType").value = "auto";
+      document.getElementById("resultMain").textContent = "-.- m/s";
+      document.getElementById("resultSub").textContent = "아직 예측을 실행하지 않았습니다.";
+      document.getElementById("resultTag").textContent = "태풍 세기: -";
+      document.getElementById("resultNote").innerHTML =
+        "현재 최대풍속, 중심기압, 위도·경도 정보를 바탕으로 한 V1 예측과 해상·연안·육지 위치 조건을 추가한 V2 예측을 비교합니다.";
+    }
+
+    function setCommonValues(lat, lon, locationType) {
+      document.getElementById("windInput").value = 80;
+      document.getElementById("pressureInput").value = 950;
+      document.getElementById("latInput").value = lat;
+      document.getElementById("lonInput").value = lon;
+      document.getElementById("locationType").value = locationType;
+
+      var radios = document.querySelectorAll('input[name="windUnit"]');
+      for (var i = 0; i < radios.length; i++) {
+        if (radios[i].value === "kt") radios[i].checked = true;
+      }
+    }
+
+    function onSampleSea() {
+      setCommonValues(25, 130, "sea");
+    }
+
+    function onSampleCoast() {
+      setCommonValues(30, 128, "coast");
+    }
+
+    function onSampleLand() {
+      setCommonValues(35, 128, "land");
+    }
+  </script>
+</body>
+</html>
