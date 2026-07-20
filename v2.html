@@ -1,281 +1,175 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>태풍 풍속 예측 AI V2</title>
-  <style>
-    body { font-family: Arial, sans-serif; background:#f4f7fb; margin:0; padding:30px; color:#222; }
-    .box { max-width:760px; margin:auto; background:white; padding:26px; border-radius:14px; box-shadow:0 4px 14px rgba(0,0,0,0.08); }
-    h1 { margin-top:0; }
-    h2 { border-left:5px solid #1f6feb; padding-left:10px; margin-top:26px; }
-    label { display:block; font-weight:bold; margin-top:14px; }
-    input, select { width:100%; padding:10px; margin-top:6px; box-sizing:border-box; border:1px solid #bbb; border-radius:8px; font-size:15px; }
-    .radio { display:flex; gap:18px; margin-top:8px; }
-    .radio label { font-weight:normal; margin-top:0; }
-    button { margin-top:16px; margin-right:8px; padding:10px 14px; border:0; border-radius:8px; background:#1f6feb; color:white; cursor:pointer; }
-    button.sub { background:#0f766e; }
-    button.gray { background:#666; }
-    .result { margin-top:18px; padding:18px; background:#f8fafc; border:1px solid #d7dde7; border-radius:12px; }
-    #mainResult { font-size:30px; font-weight:bold; margin-bottom:10px; }
-    table { width:100%; border-collapse:collapse; margin-top:16px; font-size:14px; }
-    th, td { border:1px solid #d7dde7; padding:8px; text-align:center; }
-    th { background:#f1f5ff; }
-    .note { background:#fff7ed; border:1px solid #fed7aa; padding:12px; border-radius:10px; line-height:1.6; }
-  </style>
+<meta charset="UTF-8">
+<title>태풍 풍속 예측 AI V2</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f7fb;padding:30px;color:#222}
+.box{max-width:760px;margin:auto;background:white;padding:25px;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+h2{border-left:5px solid #1f6feb;padding-left:10px}
+input,select{width:100%;padding:10px;margin:6px 0 12px 0;box-sizing:border-box}
+button{padding:10px 14px;margin:6px;background:#1f6feb;color:white;border:0;border-radius:8px}
+.result{background:#f8fafc;border:1px solid #d7dde7;padding:16px;border-radius:10px;margin-top:15px}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+td,th{border:1px solid #ccc;padding:8px;text-align:center}
+th{background:#f1f5ff}
+</style>
 </head>
 <body>
 <div class="box">
-  <h1>태풍 풍속 예측 AI V2</h1>
+<h1>태풍 풍속 예측 AI V2</h1>
+<p>V1은 현재 최대풍속, 중심기압, 위도, 경도를 바탕으로 예측하고 V2는 해상·연안·육지 조건을 추가 반영합니다.</p>
 
-  <div class="note">
-    V1은 현재 최대풍속, 중심기압, 위도, 경도를 바탕으로 6시간 뒤 풍속을 예측합니다.
-    V2는 여기에 해상·연안·육지 위치 조건을 추가로 반영하여 V1과 V2의 차이를 비교합니다.
-  </div>
+<h2>① 입력</h2>
+<label>현재 최대풍속</label>
+<input id="wind" type="number" placeholder="예: 80">
+<label><input type="radio" name="unit" value="kt" checked> kt</label>
+<label><input type="radio" name="unit" value="ms"> m/s</label>
 
-  <h2>① 입력</h2>
+<label>중심기압 hPa</label>
+<input id="pressure" type="number" placeholder="예: 950">
 
-  <label>현재 최대풍속</label>
-  <input type="number" id="wind" placeholder="예: 80">
+<label>위도 °N</label>
+<input id="lat" type="number" placeholder="예: 25">
 
-  <div class="radio">
-    <label><input type="radio" name="unit" value="kt" checked> kt</label>
-    <label><input type="radio" name="unit" value="ms"> m/s</label>
-  </div>
+<label>경도 °E</label>
+<input id="lon" type="number" placeholder="예: 130">
 
-  <label>중심기압 hPa</label>
-  <input type="number" id="pressure" placeholder="예: 950">
+<label>위치 조건</label>
+<select id="loc">
+<option value="auto">자동 분류</option>
+<option value="sea">해상</option>
+<option value="coast">연안</option>
+<option value="land">육지</option>
+</select>
 
-  <label>위도 °N</label>
-  <input type="number" id="lat" placeholder="예: 25">
+<button onclick="sample('sea')">해상 예시</button>
+<button onclick="sample('coast')">연안 예시</button>
+<button onclick="sample('land')">육지 예시</button>
+<button onclick="predict()">예측하기</button>
 
-  <label>경도 °E</label>
-  <input type="number" id="lon" placeholder="예: 130">
+<h2>② V1·V2 예측 결과 비교</h2>
+<div class="result">
+<div id="main" style="font-size:30px;font-weight:bold">-.- m/s</div>
+<div id="sub">아직 예측을 실행하지 않았습니다.</div>
+<div id="tag">태풍 세기: -</div>
+<div id="note">V1 기존 예측과 V2 위치 조건 반영 예측을 비교합니다.</div>
+</div>
 
-  <label>위치 조건</label>
-  <select id="location">
-    <option value="auto">위도·경도 기준 자동 분류</option>
-    <option value="sea">해상</option>
-    <option value="coast">연안</option>
-    <option value="land">육지</option>
-  </select>
-
-  <button onclick="predict()">예측하기</button>
-  <button class="sub" onclick="sampleSea()">해상 예시</button>
-  <button class="sub" onclick="sampleCoast()">연안 예시</button>
-  <button class="sub" onclick="sampleLand()">육지 예시</button>
-  <button class="gray" onclick="resetAll()">지우기</button>
-
-  <h2>② V1·V2 예측 결과 비교</h2>
-
-  <div class="result">
-    <div id="mainResult">-.- m/s</div>
-    <div id="subResult">아직 예측을 실행하지 않았습니다.</div>
-    <div id="tagResult">태풍 세기: -</div>
-    <div id="noteResult" style="margin-top:12px; line-height:1.6;">
-      V1 기존 예측과 V2 위치 조건 반영 예측을 비교합니다.
-    </div>
-  </div>
-
-  <h2>③ 보고서 기록용 결과표</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>위치 조건</th>
-        <th>V1 예측값</th>
-        <th>V2 예측값</th>
-        <th>차이</th>
-        <th>역할 해석</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody">
-      <tr><td colspan="5">예측을 실행하면 결과가 기록됩니다.</td></tr>
-    </tbody>
-  </table>
+<h2>③ 보고서 기록용 결과표</h2>
+<table>
+<thead>
+<tr><th>조건</th><th>V1</th><th>V2</th><th>차이</th><th>역할 해석</th></tr>
+</thead>
+<tbody id="tbody">
+<tr><td colspan="5">예측을 실행하면 기록됩니다.</td></tr>
+</tbody>
+</table>
 </div>
 
 <script>
-  var records = [];
+var records=[];
 
-  function n(id) {
-    return parseFloat(document.getElementById(id).value);
+function val(id){return parseFloat(document.getElementById(id).value);}
+function fmt(x){return x.toFixed(1);}
+function unit(){
+  var r=document.querySelector('input[name="unit"]:checked');
+  return r?r.value:"kt";
+}
+function label(x){
+  if(x==="sea")return"해상";
+  if(x==="coast")return"연안";
+  if(x==="land")return"육지";
+  return"미분류";
+}
+function autoLoc(lat,lon){
+  if(lat>=33&&lon>=124&&lon<=132)return"land";
+  if(lat>=27&&lat<33&&lon>=122&&lon<=135)return"coast";
+  return"sea";
+}
+function getLoc(lat,lon){
+  var x=document.getElementById("loc").value;
+  if(x==="auto")return autoLoc(lat,lon);
+  return x;
+}
+function strength(ms){
+  if(ms<10)return"약한 열대저기압 수준";
+  if(ms<17)return"약한 태풍";
+  if(ms<33)return"중간 세기 태풍";
+  return"강한 태풍";
+}
+function v1(wind,pressure,lat,lon){
+  var p=wind;
+  if(pressure<950)p+=3;
+  else if(pressure>1005)p-=2;
+  if(lat>30)p-=1.5;
+  else if(lat<15)p+=0.5;
+  if(lon>140)p-=0.5;
+  if(p<0)p=0;
+  return p;
+}
+function v2(wind,pressure,lat,lon,loc){
+  var p=v1(wind,pressure,lat,lon);
+  if(loc==="sea"){
+    if(pressure<970)p+=1.2;
+    else p+=0.5;
   }
-
-  function unit() {
-    var r = document.querySelector('input[name="unit"]:checked');
-    return r ? r.value : "kt";
+  if(loc==="coast"){
+    p-=0.3;
+    if(wind>=33)p-=0.7;
   }
-
-  function fmt(x) {
-    return x.toFixed(1);
+  if(loc==="land"){
+    p-=2.0;
+    if(wind>=25)p-=1.0;
   }
-
-  function label(loc) {
-    if (loc === "sea") return "해상";
-    if (loc === "coast") return "연안";
-    if (loc === "land") return "육지";
-    return "미분류";
+  if(p<0)p=0;
+  return p;
+}
+function role(diff,loc){
+  var l=label(loc);
+  if(Math.abs(diff)<0.5)return l+" 조건은 예측값 변화보다 오차 진단 기준에 가까움";
+  if(diff>0)return l+" 조건은 세력 유지 가능성을 반영하는 예측 보정 변수로 작용";
+  return l+" 조건은 세력 약화 가능성을 설명하는 오차 진단 기준으로 작용";
+}
+function predict(){
+  var w=val("wind"), pr=val("pressure"), la=val("lat"), lo=val("lon");
+  if(isNaN(w)||isNaN(pr)||isNaN(la)||isNaN(lo)){
+    alert("모든 값을 숫자로 입력하세요.");
+    return;
   }
+  var windMs=unit()==="kt"?w*0.514:w;
+  var lc=getLoc(la,lo);
+  var a=v1(windMs,pr,la,lo);
+  var b=v2(windMs,pr,la,lo,lc);
+  var d=b-a;
+  var r=role(d,lc);
 
-  function autoLocation(lat, lon) {
-    if (lat >= 33 && lon >= 124 && lon <= 132) return "land";
-    if (lat >= 27 && lat < 33 && lon >= 122 && lon <= 135) return "coast";
-    return "sea";
+  document.getElementById("main").textContent=fmt(b)+" m/s";
+  document.getElementById("sub").textContent="V1 기존 예측: "+fmt(a)+" m/s · V2 위치 조건 반영 예측: "+fmt(b)+" m/s · 차이: "+(d>=0?"+":"")+fmt(d)+" m/s";
+  document.getElementById("tag").textContent="태풍 세기: "+strength(b)+" / 위치 조건: "+label(lc);
+  document.getElementById("note").textContent=r;
+
+  records.push({loc:label(lc),v1:fmt(a),v2:fmt(b),diff:(d>=0?"+":"")+fmt(d),role:r});
+  draw();
+}
+function draw(){
+  var t=document.getElementById("tbody");
+  t.innerHTML="";
+  for(var i=0;i<records.length;i++){
+    var x=records[i];
+    var tr=document.createElement("tr");
+    tr.innerHTML="<td>"+x.loc+"</td><td>"+x.v1+" m/s</td><td>"+x.v2+" m/s</td><td>"+x.diff+" m/s</td><td>"+x.role+"</td>";
+    t.appendChild(tr);
   }
-
-  function getLocation(lat, lon) {
-    var loc = document.getElementById("location").value;
-    if (loc === "auto") return autoLocation(lat, lon);
-    return loc;
-  }
-
-  function strength(ms) {
-    if (ms < 10) return "약한 열대저기압 수준";
-    if (ms < 17) return "약한 태풍";
-    if (ms < 33) return "중간 세기 태풍";
-    return "강한 태풍";
-  }
-
-  function v1Model(windMs, pressure, lat, lon) {
-    var pred = windMs;
-
-    if (pressure < 950) pred += 3;
-    else if (pressure > 1005) pred -= 2;
-
-    if (lat > 30) pred -= 1.5;
-    else if (lat < 15) pred += 0.5;
-
-    if (lon > 140) pred -= 0.5;
-
-    if (pred < 0) pred = 0;
-    return pred;
-  }
-
-  function v2Model(windMs, pressure, lat, lon, loc) {
-    var pred = v1Model(windMs, pressure, lat, lon);
-
-    if (loc === "sea") {
-      if (pressure < 970) pred += 1.2;
-      else pred += 0.5;
-    }
-
-    if (loc === "coast") {
-      pred -= 0.3;
-      if (windMs >= 33) pred -= 0.7;
-    }
-
-    if (loc === "land") {
-      pred -= 2.0;
-      if (windMs >= 25) pred -= 1.0;
-    }
-
-    if (pred < 0) pred = 0;
-    return pred;
-  }
-
-  function role(diff, loc) {
-    var l = label(loc);
-
-    if (Math.abs(diff) < 0.5) {
-      return l + " 조건은 예측값 변화보다 오차 진단 기준에 가까움";
-    }
-
-    if (diff > 0) {
-      return l + " 조건은 세력 유지 가능성을 반영하는 예측 보정 변수로 작용";
-    }
-
-    return l + " 조건은 세력 약화 가능성을 설명하는 오차 진단 기준으로 작용";
-  }
-
-  function predict() {
-    var wind = n("wind");
-    var pressure = n("pressure");
-    var lat = n("lat");
-    var lon = n("lon");
-
-    if (isNaN(wind) || isNaN(pressure) || isNaN(lat) || isNaN(lon)) {
-      alert("모든 입력값을 숫자로 입력하세요.");
-      return;
-    }
-
-    var windMs = unit() === "kt" ? wind * 0.514 : wind;
-    var loc = getLocation(lat, lon);
-
-    var v1 = v1Model(windMs, pressure, lat, lon);
-    var v2 = v2Model(windMs, pressure, lat, lon, loc);
-    var diff = v2 - v1;
-    var r = role(diff, loc);
-
-    document.getElementById("mainResult").textContent = fmt(v2) + " m/s";
-    document.getElementById("subResult").textContent =
-      "V1 기존 예측: " + fmt(v1) + " m/s · V2 위치 조건 반영 예측: " +
-      fmt(v2) + " m/s · 차이: " + (diff >= 0 ? "+" : "") + fmt(diff) + " m/s";
-    document.getElementById("tagResult").textContent =
-      "태풍 세기: " + strength(v2) + " / 위치 조건: " + label(loc);
-    document.getElementById("noteResult").textContent = r;
-
-    records.push({
-      loc: label(loc),
-      v1: fmt(v1),
-      v2: fmt(v2),
-      diff: (diff >= 0 ? "+" : "") + fmt(diff),
-      role: r
-    });
-
-    drawTable();
-  }
-
-  function drawTable() {
-    var body = document.getElementById("tableBody");
-    body.innerHTML = "";
-
-    for (var i = 0; i < records.length; i++) {
-      var x = records[i];
-      var tr = document.createElement("tr");
-      tr.innerHTML =
-        "<td>" + x.loc + "</td>" +
-        "<td>" + x.v1 + " m/s</td>" +
-        "<td>" + x.v2 + " m/s</td>" +
-        "<td>" + x.diff + " m/s</td>" +
-        "<td>" + x.role + "</td>";
-      body.appendChild(tr);
-    }
-  }
-
-  function setValues(lat, lon, loc) {
-    document.getElementById("wind").value = 80;
-    document.getElementById("pressure").value = 950;
-    document.getElementById("lat").value = lat;
-    document.getElementById("lon").value = lon;
-    document.getElementById("location").value = loc;
-    document.querySelector('input[value="kt"]').checked = true;
-  }
-
-  function sampleSea() {
-    setValues(25, 130, "sea");
-  }
-
-  function sampleCoast() {
-    setValues(30, 128, "coast");
-  }
-
-  function sampleLand() {
-    setValues(35, 128, "land");
-  }
-
-  function resetAll() {
-    document.getElementById("wind").value = "";
-    document.getElementById("pressure").value = "";
-    document.getElementById("lat").value = "";
-    document.getElementById("lon").value = "";
-    document.getElementById("location").value = "auto";
-    document.getElementById("mainResult").textContent = "-.- m/s";
-    document.getElementById("subResult").textContent = "아직 예측을 실행하지 않았습니다.";
-    document.getElementById("tagResult").textContent = "태풍 세기: -";
-    document.getElementById("noteResult").textContent = "V1 기존 예측과 V2 위치 조건 반영 예측을 비교합니다.";
-    records = [];
-    document.getElementById("tableBody").innerHTML = '<tr><td colspan="5">예측을 실행하면 결과가 기록됩니다.</td></tr>';
-  }
+}
+function sample(x){
+  document.getElementById("wind").value=80;
+  document.getElementById("pressure").value=950;
+  document.querySelector('input[value="kt"]').checked=true;
+  if(x==="sea"){document.getElementById("lat").value=25;document.getElementById("lon").value=130;document.getElementById("loc").value="sea";}
+  if(x==="coast"){document.getElementById("lat").value=30;document.getElementById("lon").value=128;document.getElementById("loc").value="coast";}
+  if(x==="land"){document.getElementById("lat").value=35;document.getElementById("lon").value=128;document.getElementById("loc").value="land";}
+}
 </script>
 </body>
 </html>
