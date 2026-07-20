@@ -2,372 +2,224 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>태풍 6시간 뒤 풍속 예측</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>태풍 6시간 뒤 풍속 예측 V2</title>
   <style>
-    :root {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0b1020;
-      color: #f5f5f5;
-    }
-
     body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
       margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      box-sizing: border-box;
+      padding: 0;
+      color: #222;
     }
 
-    .card {
-      width: 100%;
-      max-width: 920px;
-      background: radial-gradient(circle at top left, #283a7a 0, #111827 40%, #020617 100%);
-      border-radius: 18px;
-      padding: 28px 24px 24px;
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65);
-      box-sizing: border-box;
+    .container {
+      max-width: 760px;
+      margin: 40px auto;
+      background: white;
+      padding: 28px;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
     }
 
-    @media (min-width: 840px) {
-      .card {
-        padding: 32px 36px 28px;
-      }
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
     }
 
-    .title-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px 16px;
-      margin-bottom: 4px;
-    }
-
-    .title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-    }
-
-    .badge {
-      font-size: 0.78rem;
-      padding: 3px 10px;
-      border-radius: 999px;
-      background: rgba(15, 118, 110, 0.2);
-      border: 1px solid rgba(34, 197, 94, 0.35);
-      color: #a5f3fc;
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+      border-left: 5px solid #1f6feb;
+      padding-left: 10px;
     }
 
     .subtitle {
-      font-size: 0.9rem;
-      color: #cbd5f5;
-      margin-top: 4px;
-      margin-bottom: 16px;
+      color: #555;
+      line-height: 1.6;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
+    .input-group {
+      margin: 16px 0;
     }
 
-    @media (min-width: 720px) {
-      .grid {
-        grid-template-columns: 3fr 2fr;
-        gap: 20px;
-      }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
     }
 
-    .panel {
-      border-radius: 14px;
-      padding: 14px 14px 16px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      box-sizing: border-box;
-    }
-
-    .panel h2 {
-      margin: 0 0 10px;
-      font-size: 0.98rem;
-      font-weight: 600;
-      color: #e5e7eb;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .panel small {
-      font-size: 0.78rem;
-      color: #9ca3af;
-    }
-
-    .inputs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px 14px;
-      margin-top: 10px;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 0.82rem;
-    }
-
-    .field label {
-      color: #e5e7eb;
-    }
-
-    .unit-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .unit-row span {
-      font-size: 0.78rem;
-      color: #9ca3af;
-    }
-
-    input[type="number"] {
+    input[type="number"], select {
       width: 100%;
       box-sizing: border-box;
-      padding: 7px 9px;
+      padding: 10px;
+      border: 1px solid #bbb;
       border-radius: 8px;
-      border: 1px solid #4b5563;
-      background: rgba(15, 23, 42, 0.85);
-      color: #f9fafb;
-      font-size: 0.85rem;
-      outline: none;
+      font-size: 16px;
     }
 
-    input[type="number"]:focus {
-      border-color: #38bdf8;
-      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
-    }
-
-    .radio-group {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      color: #e5e7eb;
-    }
-
-    .radio-group + .radio-group {
-      margin-left: 10px;
-    }
-
-    .helper {
-      margin-top: 10px;
-      font-size: 0.78rem;
-      color: #9ca3af;
-      line-height: 1.4;
-    }
-
-    .helper strong {
-      color: #e5e7eb;
-      font-weight: 500;
-    }
-
-    .btn-row {
+    .radio-row {
       display: flex;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .range-box {
+      background: #f1f5ff;
+      padding: 12px 16px;
+      border-radius: 10px;
+      line-height: 1.7;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 14px;
+      margin-top: 20px;
     }
 
     button {
-      border-radius: 999px;
+      padding: 10px 16px;
       border: none;
-      font-size: 0.86rem;
-      padding: 7px 14px;
+      border-radius: 8px;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
+      font-size: 15px;
+      background: #1f6feb;
+      color: white;
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #22c55e, #0ea5e9);
-      color: #0b1020;
-      font-weight: 600;
-      box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4);
+    button.secondary {
+      background: #6b7280;
     }
 
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      color: #e5e7eb;
+    button.sample {
+      background: #0f766e;
     }
 
-    .btn-soft {
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px dashed rgba(148, 163, 184, 0.6);
-      color: #cbd5f5;
-      font-size: 0.8rem;
+    .result-box {
+      margin-top: 18px;
+      padding: 20px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #d7dde7;
     }
 
-    .result-main {
-      margin-top: 4px;
-      font-size: 2.1rem;
-      font-weight: 700;
-      color: #facc15;
+    #resultMain {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 10px;
     }
 
-    .result-sub {
-      font-size: 0.9rem;
-      color: #e5e7eb;
-      margin-top: 4px;
+    #resultSub {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #333;
     }
 
-    .result-tag {
-      display: inline-flex;
-      align-items: center;
-      padding: 3px 9px;
-      border-radius: 999px;
-      font-size: 0.78rem;
-      margin-top: 8px;
-      border: 1px solid rgba(248, 250, 252, 0.35);
-      background: rgba(15, 23, 42, 0.9);
+    #resultTag {
+      margin-top: 12px;
+      font-weight: bold;
+      color: #1f6feb;
     }
 
-    .result-note {
-      margin-top: 10px;
-      font-size: 0.78rem;
-      color: #9ca3af;
-      line-height: 1.5;
-    }
-
-    .warn {
-      color: #f97316;
+    #resultNote {
+      margin-top: 14px;
+      line-height: 1.7;
+      font-size: 14px;
+      color: #444;
     }
 
     .footer {
-      margin-top: 18px;
-      font-size: 0.76rem;
-      color: #6b7280;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: space-between;
-      align-items: center;
+      margin-top: 28px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.6;
     }
 
-    .footer span {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: #22c55e;
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.7);
+    .highlight {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      padding: 12px 16px;
+      border-radius: 10px;
+      line-height: 1.7;
+      font-size: 14px;
+      margin-top: 14px;
     }
   </style>
 </head>
+
 <body>
-  <main class="card">
-    <div class="title-row">
-      <div class="title">태풍 6시간 뒤 풍속 예측</div>
-      <div class="badge">브라우저에서 실행되는 간단한 결정트리 기반 AI</div>
-    </div>
+  <div class="container">
+    <h1>태풍 6시간 뒤 풍속 예측 V2</h1>
     <p class="subtitle">
-      현재 태풍의 상태 4가지를 입력하면, 6시간 뒤 최대풍속을 m/s 단위로 예측합니다.
-      (고등학교 수준 데이터 탐구 프로젝트용 프로토타입)
+      기존 V1 모델은 현재 최대풍속, 중심기압, 위도, 경도를 바탕으로 6시간 뒤 풍속을 예측합니다.
+      V2 모델은 여기에 해상·연안·육지 위치 조건을 추가로 반영하여 V1과 V2의 예측 차이를 비교합니다.
     </p>
 
-    <div class="grid">
-      <!-- 입력 패널 -->
-      <section class="panel">
-        <h2>① 현재 태풍 상태 입력</h2>
-        <small>수치는 기상청 태풍 정보와 비슷한 범위 안에서 입력하는 것을 권장합니다.</small>
-
-        <div class="inputs">
-          <div class="field">
-            <label for="windInput">현재 최대풍속</label>
-            <div class="unit-row">
-              <input id="windInput" type="number" step="0.1" placeholder="예: 80" />
-              <span>
-                <label class="radio-group">
-                  <input type="radio" name="windUnit" value="kt" checked />
-                  kt
-                </label>
-                <label class="radio-group">
-                  <input type="radio" name="windUnit" value="ms" />
-                  m/s
-                </label>
-              </span>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="pressureInput">중심기압 (hPa)</label>
-            <input id="pressureInput" type="number" step="1" placeholder="예: 950" />
-          </div>
-
-          <div class="field">
-            <label for="latInput">위도 (°N)</label>
-            <input id="latInput" type="number" step="0.1" placeholder="예: 25" />
-          </div>
-
-          <div class="field">
-            <label for="lonInput">경도 (°E)</label>
-            <input id="lonInput" type="number" step="0.1" placeholder="예: 130" />
-          </div>
-        </div>
-
-        <div class="helper">
-          <strong>권장 입력 범위</strong><br />
-          · 풍속: 0–120 kt (또는 0–62 m/s)<br />
-          · 기압: 880–1040 hPa<br />
-          · 위도: 0–60°N · 경도: 100–160°E
-        </div>
-
-        <div class="btn-row">
-          <button id="predictBtn" class="btn-primary">
-            예측하기
-          </button>
-          <button id="resetBtn" class="btn-ghost">
-            지우기
-          </button>
-          <button id="sampleBtn" class="btn-soft">
-            예시 자동입력
-          </button>
-        </div>
-      </section>
-
-      <!-- 결과 패널 -->
-      <section class="panel">
-        <h2>② 6시간 뒤 풍속 예측 결과</h2>
-        <div id="resultMain" class="result-main">-.- m/s</div>
-        <div id="resultSub" class="result-sub">아직 예측을 실행하지 않았습니다.</div>
-        <div id="resultTag" class="result-tag">태풍 세기: -</div>
-        <div id="resultNote" class="result-note">
-          현재 최대풍속, 중심기압, 위도·경도 정보를 바탕으로 간단한 결정트리 형태의 규칙 모델이
-          6시간 뒤 풍속을 예측합니다. 이 값은 <span class="warn">실제 기상청 공식 예보가 아니라
-          교육용 탐구 모델</span>이라는 점에 유의해야 합니다.
-        </div>
-      </section>
+    <div class="highlight">
+      탐구 목적: 해상·연안·육지 조건이 태풍 풍속 예측 성능을 직접 개선하는 변수인지,
+      아니면 모델이 흔들리는 상황을 설명하는 오차 진단 기준인지 확인합니다.
     </div>
 
-    <footer class="footer">
-      <span>
-        <span class="dot"></span>
-        <span>기상청 공개 태풍 데이터를 바탕으로 만든 고등학교 1인 1주제 탐구용 프로토타입</span>
-      </span>
-      <span>모델: 간단한 결정트리 회귀 아이디어 (Python → 규칙화 → JavaScript 구현)</span>
-    </footer>
-  </main>
+    <h2>① 현재 태풍 상태 입력</h2>
 
-  <script src="app.js"></script>
+    <div class="input-group">
+      <label for="windInput">현재 최대풍속</label>
+      <input type="number" id="windInput" placeholder="예: 80" />
+      <div class="radio-row">
+        <label><input type="radio" name="windUnit" value="kt" checked /> kt</label>
+        <label><input type="radio" name="windUnit" value="ms" /> m/s</label>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label for="pressureInput">중심기압 (hPa)</label>
+      <input type="number" id="pressureInput" placeholder="예: 950" />
+    </div>
+
+    <div class="input-group">
+      <label for="latInput">위도 (°N)</label>
+      <input type="number" id="latInput" placeholder="예: 25" />
+    </div>
+
+    <div class="input-group">
+      <label for="lonInput">경도 (°E)</label>
+      <input type="number" id="lonInput" placeholder="예: 130" />
+    </div>
+
+    <div class="range-box">
+      권장 입력 범위<br>
+      · 풍속: 0–120 kt 또는 0–62 m/s<br>
+      · 기압: 880–1040 hPa<br>
+      · 위도: 0–60°N · 경도: 100–160°E
+    </div>
+
+    <div class="button-row">
+      <button id="predictBtn">예측하기</button>
+      <button id="resetBtn" class="secondary">지우기</button>
+      <button id="sampleBtn" class="sample">예시 자동입력</button>
+    </div>
+
+    <h2>② V1·V2 예측 결과 비교</h2>
+
+    <div class="result-box">
+      <div id="resultMain">-.- m/s</div>
+      <div id="resultSub">아직 예측을 실행하지 않았습니다.</div>
+      <div id="resultTag">태풍 세기: -</div>
+      <div id="resultNote">
+        현재 최대풍속, 중심기압, 위도·경도 정보를 바탕으로 한 V1 예측과,
+        해상·연안·육지 위치 조건을 추가한 V2 예측을 비교합니다.
+      </div>
+    </div>
+
+    <div class="footer">
+      기상청 공개 태풍 자료를 바탕으로 만든 고등학교 1인 1주제 탐구용 프로토타입 모델입니다.
+      실제 기상청 공식 예보가 아니라 교육용 탐구 모델이며, 위치 조건은 해상·연안·육지 조건의 역할을 비교하기 위한 보조 기준입니다.
+    </div>
+  </div>
+
+  <script src="app.js?v=2"></script>
 </body>
 </html>
